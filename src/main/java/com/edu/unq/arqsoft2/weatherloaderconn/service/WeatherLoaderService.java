@@ -2,6 +2,7 @@ package com.edu.unq.arqsoft2.weatherloaderconn.service;
 
 import com.edu.unq.arqsoft2.weatherloaderconn.config.WebClientBase;
 import com.edu.unq.arqsoft2.weatherloaderconn.dto.AuthDto;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class WeatherLoaderService extends WebClientBase {
     }
 
     @Retry(name = "externalApiRetry", fallbackMethod = "fallbackMethod")
+    @CircuitBreaker(name = "weatherService", fallbackMethod = "fallbackWeatherInfo")
     public Mono<String> getWeatherInfo(Map<String, String> queryParams) {
         queryParams.put("appid", authDto.getApiKey());
         return get("/weather", queryParams);
@@ -29,6 +31,10 @@ public class WeatherLoaderService extends WebClientBase {
     public Mono<String> createFlightOffersSearchPricing(String requestBody) {
 
         return post("v1/shopping/flight-offers/pricing", null, requestBody);
+    }
+
+    public String fallbackWeatherInfo(Map<String, String> queryParams, Throwable t) {
+        return "Service unavailable. Please try again later.";
     }
 
     private Mono<String> fallbackMethod(Exception ex) {
