@@ -1,5 +1,6 @@
 package com.edu.unq.arqsoft2.weatherloaderconn.controller;
 
+import com.edu.unq.arqsoft2.weatherloaderconn.model.WeatherEntity;
 import com.edu.unq.arqsoft2.weatherloaderconn.service.WeatherLoaderService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,13 +24,13 @@ public class WeatherLoaderController {
     /*Circuito Basico*/
 
     @GetMapping("/search")
-    public Mono<String> getWeatherInfo(@RequestParam Map<String, String> queryParams) {
+    public Mono<WeatherEntity> getWeatherInfo(@RequestParam Map<String, String> queryParams) {
         return service.getWeatherInfo(queryParams);
     }
 
     @PostMapping("/shopping/flight-offers/pricing")
-    public Mono<String> createFlightOffersSearchPricing(@RequestBody String requestBody) {
-        return service.createFlightOffersSearchPricing(requestBody);
+    public Mono<String> method(@RequestBody String requestBody) {
+        return service.method(requestBody);
     }
 
 
