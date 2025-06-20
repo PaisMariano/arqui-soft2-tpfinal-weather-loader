@@ -9,17 +9,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class WeatherScheduler {
+public class WeatherLoaderScheduler {
 
     @Autowired
     private WeatherLoaderService weatherLoaderService;
 
-    // Runs every 10 minutes (600,000 ms)
-    @Scheduled(fixedRate = 600000)
+    // Runs every 5 minutes
+    @Scheduled(fixedRate = 60000 * 5)
     public void fetchWeatherPeriodically() {
         Map<String, String> params = new HashMap<>();
         params.put("q", "Buenos Aires"); // Example city
         params.put("units", "metric");
-        weatherLoaderService.getWeatherInfo(params).subscribe();
+        weatherLoaderService.getWeatherInfo(params);
     }
 }

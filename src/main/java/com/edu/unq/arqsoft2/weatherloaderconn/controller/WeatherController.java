@@ -1,7 +1,9 @@
 package com.edu.unq.arqsoft2.weatherloaderconn.controller;
 
+import com.edu.unq.arqsoft2.weatherloaderconn.dto.TemperatureDto;
 import com.edu.unq.arqsoft2.weatherloaderconn.model.WeatherEntity;
 import com.edu.unq.arqsoft2.weatherloaderconn.service.WeatherLoaderService;
+import com.edu.unq.arqsoft2.weatherloaderconn.service.WeatherService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,24 +16,26 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/weather-loader")
-public class WeatherLoaderController {
-    private final WeatherLoaderService service;
+public class WeatherController {
+    private final WeatherService service;
 
-    public WeatherLoaderController(WeatherLoaderService service) {
+    public WeatherController(WeatherService service) {
         this.service = service;
     }
 
-    /*Circuito Basico*/
-
-    @GetMapping("/search")
-    public Mono<WeatherEntity> getWeatherInfo(@RequestParam Map<String, String> queryParams) {
-        return service.getWeatherInfo(queryParams);
+    @GetMapping("/search/current")
+    public TemperatureDto getCurrentWeather() {
+        return service.getCurrentTemperature();
     }
 
-    @PostMapping("/shopping/flight-offers/pricing")
-    public Mono<String> method(@RequestBody String requestBody) {
-        return service.method(requestBody);
+    @GetMapping("/search/avg/day")
+    public TemperatureDto getAverageTemperatureByDay() {
+        return service.getAverageTemperatureByDay();
     }
 
+    @GetMapping("/search/avg/week")
+    public TemperatureDto getAverageTemperatureByWeek() {
+        return service.getAverageTemperatureByWeek();
+    }
 
 }
