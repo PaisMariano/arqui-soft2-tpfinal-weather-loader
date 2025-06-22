@@ -1,0 +1,39 @@
+services:
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - logging
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+      - /var/log:/var/log
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - logging
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_FEATURE_TOGGLES_ENABLE=tempoSearch,featureHighlights
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    networks:
+      - logging
+    depends_on:
+      - loki
+
+networks:
+  logging:
+    driver: bridge

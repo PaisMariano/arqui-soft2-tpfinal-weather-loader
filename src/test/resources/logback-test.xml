@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="weatherloader-test"/>
+
+    <!-- Formato JSON para los logs (solo en consola para pruebas) -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app":"${appName}","env":"test"}</customFields>
+        </encoder>
+    </appender>
+
+    <!-- Niveles de log para pruebas -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+
+    <!-- Logs de nivel DEBUG para paquetes específicos en pruebas -->
+    <logger name="com.edu.unq.arqsoft2" level="DEBUG"/>
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+</configuration>

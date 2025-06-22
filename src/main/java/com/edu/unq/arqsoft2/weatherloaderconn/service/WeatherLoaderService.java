@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -21,6 +22,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class WeatherLoaderService extends WebClientBase {
     @Autowired
@@ -37,13 +39,23 @@ public class WeatherLoaderService extends WebClientBase {
 
     @Retry(name = "externalApiRetry", fallbackMethod = "fallbackMethod")
     @CircuitBreaker(name = "weatherService", fallbackMethod = "fallbackWeatherInfo")
-    public void getWeatherInfo(Map<String, String> queryParams) {
-        queryParams.put("appid", authDto.getApiKey());
-
-        Mono<WeatherEntity> weatherEntityMono = get("/weather", queryParams).map(this::mapToWeatherEntity);
-
-        WeatherEntity entity = weatherService.saveWeatherData(weatherEntityMono.block());
-        System.out.println("Weather data saved successfully, temp: " +entity.getTemperature() + " date: " + new Date());
+    public Mono<Void> getWeatherInfo(Map<String, String> queryParams) {
+        String city = queryParams.get("q");
+        log.info("Iniciando solicitud de datos meteorológicos para la ciudad: {}", city);
+        
+        return Mono.defer(() -> {
+            queryParams.put("appid", authDto.getApiKey());
+            log.debug("Parámetros de consulta: {}", queryParams);
+            return get("/weather", queryParams);
+        })
+        .doOnNext(response -> log.debug("Respuesta recibida de la API: {}", response))
+        .map(this::mapToWeatherEntity)
+        .map(weatherService::saveWeatherData)
+        .doOnSuccess(entity -> 
+            log.info("Datos meteorológicos guardados exitosamente - Ciudad: {}, Temperatura: {}°C, Fecha: {}", 
+                   city, entity.getTemperature(), new Date())
+        )
+        .then();
     }
 
     @Retry(name = "externalApiRetry", fallbackMethod = "fallbackMethod")
@@ -52,12 +64,16 @@ public class WeatherLoaderService extends WebClientBase {
         return post("v1/", null, requestBody);
     }
 
-    public String fallbackWeatherInfo(Map<String, String> queryParams, Throwable t) {
-        return "Service unavailable. Please try again later.";
+    public Mono<Void> fallbackWeatherInfo(Map<String, String> queryParams, Throwable t) {
+        String city = queryParams != null ? queryParams.get("q") : "ciudad desconocida";
+        log.warn("Fallback activado para la ciudad: {}. Razón: {}", city, t != null ? t.getMessage() : "desconocida");
+        return Mono.empty();
     }
 
-    private Mono<String> fallbackMethod(Exception ex) {
-        return Mono.just("External api error");
+    private Mono<Void> fallbackMethod(Map<String, String> queryParams, Exception ex) {
+        String city = queryParams != null ? queryParams.get("q") : "ciudad desconocida";
+        log.error("Error en la llamada a la API externa para la ciudad: {}. Fallback activado", city, ex);
+        return Mono.empty();
     }
 
     private WeatherEntity mapToWeatherEntity(String jsonResponse) {
@@ -83,10 +99,12 @@ public class WeatherLoaderService extends WebClientBase {
             entity.setDescription(description);
             entity.setTemperature(temp);
 
+            log.debug("Mapeo completado exitosamente para la ciudad: {}", city);
             return entity;
 
         } catch (Exception e) {
-            throw new MappingException("Error mapping JSON response");
+            log.error("Error al mapear la respuesta JSON: " + jsonResponse, e);
+            throw new MappingException("Error mapping JSON response", e);
         }
     }
 

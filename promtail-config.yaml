@@ -1,0 +1,47 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/*.log
+
+  - job_name: spring
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: spring-logs
+          __path__: /var/log/spring/*.log
+
+    pipeline_stages:
+      - docker: {}
+      - match:
+          selector: '{job=~"spring.+"}'
+          stages:
+            - json:
+                expressions:
+                  level: level
+                  message: message
+                  logger: logger
+                  thread: thread
+                  stack_trace: stack_trace
+                  app: app
+                  env: env
+            - labels:
+                level:
+                app:
+                env:
+            - output:
+                source: message
