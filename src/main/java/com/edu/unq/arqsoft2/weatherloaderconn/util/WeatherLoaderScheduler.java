@@ -24,7 +24,7 @@ public class WeatherLoaderScheduler {
         params.put("q", "Buenos Aires"); // Example city
         params.put("units", "metric");
         
-        weatherLoaderService.getWeatherInfo(params)
+        Mono.fromFuture(weatherLoaderService.getWeatherInfo(params))
             .doOnError(e -> log.error("Error al obtener datos meteorológicos", e))
             .subscribe(
                 null, // onNext no es necesario para Mono<Void>
