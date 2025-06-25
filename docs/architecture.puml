@@ -1,0 +1,68 @@
+@startuml
+allowmixing
+!define RECTANGLE class
+' Skin parameters for a cleaner look
+skinparam class {
+  BackgroundColor #FDF6E3
+  BorderColor #657B83
+  ArrowColor #859900
+}
+skinparam actor {
+  BorderColor #268BD2
+  FontColor #268BD2
+}
+skinparam arrow {
+  FontColor #657B83
+}
+
+RECTANGLE WeatherLoaderScheduler {
+  +fetchWeatherPeriodically()
+}
+
+RECTANGLE WeatherLoaderService {
+  +getWeatherInfo(params)
+  +fallbackWeatherInfo(params, t)
+  +fallbackMethod(params, t)
+}
+
+RECTANGLE WeatherService {
+  +saveWeatherData(entity)
+  +getCurrentTemperature()
+  +getAverageTemperatureByDay()
+  +getAverageTemperatureByWeek()
+}
+
+RECTANGLE AuthDto {
+  +getApiKey()
+}
+
+RECTANGLE WebClientBase {
+  +get(...)
+  +post(...)
+}
+
+RECTANGLE WeatherEntity {
+  +id
+  +cityName
+  +latitude
+  +longitude
+  +temperature
+  +description
+  +createdAt
+  <<MongoDB Document>>
+}
+
+RECTANGLE WeatherLoaderController {
+  +getCurrentWeather(...)
+  +getAverageTemperatureByDay(...)
+  +getAverageTemperatureByWeek(...)
+}
+
+WeatherLoaderScheduler --> WeatherLoaderService : uses
+WeatherLoaderService --> WeatherService : uses
+WeatherLoaderService --> AuthDto : uses
+WeatherLoaderService --> WebClientBase : extends
+WeatherService --> WeatherEntity : saves
+WeatherLoaderController --> WeatherService : uses
+@enduml
+
